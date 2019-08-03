@@ -77,26 +77,26 @@ class SampleClass {
         mixClosure2.call(4)
         (cls1 >> cls2)(5)
     }
-    /*
-     * delegateはclosure実行時のコンテキスト
-     * この実装ではコンテキストを変えることができていない。。。
-     * 一旦保留
-     */
+
     def doClosureSample2() {
-        def test = new ClosureTest("original")
-        test.showArguments()
+        def clsIns = new ClosureTest("original")
+        clsIns.showArguments()
+
+        println "NAME:" + clsIns.showName()
+
         println "========="
-        test.exec(test.showName)
-        println "========="
-        def delegateTest = new ClosureTest("delegate")
-        test.showName.delegate = delegateTest;
-        test.exec(test.showName)
+        // closureがdelegateを参照するようにしていれば、
+        // そのdelegateを変えることで挙動を変化さえることが可能
+        // closure内でdelegateを参照していることが必要
+        clsIns.showName.delegate = new ClosureTest("delegate")
+        println "NAME:" + clsIns.showName()
     }
     class ClosureTest {
-        String _name
-        ClosureTest(name) {
-            this._name = name
+        String name
+        def ClosureTest(String name) {
+            this.name = name
         }
+
         Closure showArguments = {
             println "Outer"
             println "this:${this.class.name}"
@@ -109,12 +109,95 @@ class SampleClass {
                 println "delegate:${delegate.class.name}"
             }()
         }
-        Closure exec = {cls ->
-            cls()    
+
+        Closure showName = {->delegate.name}
+    }
+
+    def doMapSample() {
+        Map map  = [hoge : "123", fuga : 123]
+        // 値変更方法1
+        println map.hoge
+        map["hoge"] = "change"
+        println map.hoge
+        println "========="
+        // 値変更方法2
+        println map.fuga
+        map.fuga = 987
+        println map.fuga
+        println "========="
+        // エントリー追加＆値変更方法3
+        map.put("key", "add")
+        println map.key
+        map.put("addElem", "addVal")
+        println map.addElem
+        println "SIZE:" + map.size()
+        println "========="
+        // ループ
+        map.each {entry ->
+            println "KEY:${entry.key}, VALUE:${entry.value}"
         }
-        Closure showName = {->
-            println this._name
+    }
+
+    def doOptinalSample() {
+        String val = null
+        Optional opt = Optional.ofNullable(val)
+        println toInt(opt)
+        opt = Optional.ofNullable("10")
+        println toInt(opt)
+    }
+
+    Closure toInt = {Optional opt ->
+        // メソッド呼び出しする際に、()を省略することが可能
+        // opt.map({}).orElse() -> opt.map {}.orElse 
+        Integer intVal = opt.map({value ->
+            value.toInteger() * 2
+        }).orElse(0)
+        return intVal
+    }
+
+    def doSaveNavigationSample() {
+        String val = null
+        // ?.でアクセスすることで、nullだった場合に、メソッド呼び出しを行わすに、nullを返却する
+        println val?.toInteger()?.class?.name
+    }
+
+    class SetterGetterTest {
+        String name;
+        SetterGetterTest(String name) {
+            this.name = name
         }
+        def getName() {
+            "${name}!!"
+        }
+        def setName(String name) {
+            this.name = name + " bySetter"
+        }
+    }
+
+    def doSetterGetterSample() {
+        def ins = new SetterGetterTest("SetterGetterTest")
+        // setter、getterが実装されている場合、直接フィールドアクセスのように実装していても
+        // 自動でsetter、getterを利用する
+        println ins.name
+        ins.name = "changeName"
+        println ins.name
+    }
+
+    class SetterGetterTest2 {
+        private String name
+        def SetterGetterTest2(String name) {
+            this.name = name
+        }
+
+        def getNameEx() {
+            this.name
+        }
+    }
+    def doSetterGetterSample2() {
+        def ins = new SetterGetterTest2("SetterGetterTest2")
+        // privateでも参照できる
+        println ins.name
+        println ins.getNameEx()
     }
 }
 
@@ -133,3 +216,14 @@ println "-------------------"
 clazz.doClosureSample()
 println "-------------------"
 clazz.doClosureSample2()
+println "-------------------"
+clazz.doMapSample()
+println "-------------------"
+clazz.doOptinalSample()
+println "-------------------"
+clazz.doSaveNavigationSample()
+println "-------------------"
+clazz.doSetterGetterSample()
+println "-------------------"
+clazz.doSetterGetterSample2()
+println "-------------------"
