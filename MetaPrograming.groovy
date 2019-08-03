@@ -2,7 +2,7 @@ import CategoryTestClass
 
 /**
  * 本クラス実行時には、クラスパスの指定が必要
- * groovy -cp /Users/arairyou/GroovyProject/HelloWorld MetaPrograming.groovy
+ * groovy -cp 本ソースの在り処 MetaPrograming.groovy
  * VSCodeのRun Codeでは実行できない。importするCategoryTestClassが見つけられない。
  *
  * 本来存在しないメソッドを追加することが可能（prototypeを追加するイメージ）
